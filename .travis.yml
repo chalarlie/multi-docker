@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t chalarlie/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run chalarlie/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t chalarlie/multi-client ./client
+  - docker build -t chalarlie/multi-nginx ./nginx
+  - docker build -t chalarlie/multi-server ./server
+  - docker build -t chalarlie/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push chalarlie/multi-client
+  - docker push chalarlie/multi-nginx
+  - docker push chalarlie/multi-server
+  - docker push chalarlie/multi-worker
